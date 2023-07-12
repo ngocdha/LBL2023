@@ -3,5 +3,5 @@ function construct_operator(H)
     %   H: Hamiltonian matrix
     % Outputs: 
     %   U: Unitary operator
-    U = expm(1i*H);
+    U = expm(-1i*H);
 end
