@@ -1,4 +1,4 @@
-function construct_operator(H)
+function U = construct_operator(H)
     % Inputs:
     %   H: Hamiltonian matrix
     % Outputs: 
