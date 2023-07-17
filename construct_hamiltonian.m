@@ -5,14 +5,8 @@ function H = construct_hamiltonian(W,gamma)
     % Outputs: 
     % H: Hamiltonian
     MN = size(W, 1);
-    H = zeros(MN,MN);
+    H = -gamma * W;
     for i = 1:MN
-        for j = 1:MN
-            if i ~= j
-                H(i,j) = -gamma * W(i,j);
-            else
-                H(i,j) = gamma * sum(W(:,j));
-            end
-        end
+        H(i,i) = gamma * (sum(W(i,:)) - W(i,i));
     end
 end
