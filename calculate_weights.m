@@ -29,18 +29,16 @@ for i = 2:n+1
         W(k,k) = 1;
         if k-1 >= 1
             W(k-1,k) = exp(-beta * sqrt(sum((A(i,j,:) - A(i,j-1,:).^2))) / dmax);
-        elseif k + 1 <= MN
+        end
+        if k + 1 <= MN
             W(k+1,k) = exp(-beta * sqrt(sum((A(i,j,:) - A(i,j+1,:).^2))) / dmax);
-        elseif k-m >= 1
+        end
+        if k-m >= 1
             W(k-m,k) = exp(-beta * sqrt(sum((A(i,j,:) - A(i-1,j,:).^2))) / dmax);
-        elseif k + m <= MN
+        end
+        if k + m <= MN
             W(k+m,k) = exp(-beta * sqrt(sum((A(i,j,:) - A(i+1,j,:).^2))) / dmax);
         end
     end
 end
-% for k = 1:MN
-%     for l = 1:MN
-%         W(k,l) = exp(-beta * (A(fix(k,4)+1, rem(k,4)) - A(fix(l,4)+1, rem(l,4))).^2 / dmax);
-%     end
-% end
 end
