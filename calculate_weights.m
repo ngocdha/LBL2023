@@ -30,5 +30,5 @@ for i = 2:n+1
         end
     end
 end
-% W = 1/2*(W+W');
+W = 1/2*(W+W');
 end
