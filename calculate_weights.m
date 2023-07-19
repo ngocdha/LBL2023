@@ -16,10 +16,10 @@ for i = 2:n+1
     for j = 2:m+1
         k = m*(i-2) + (j-1);
         W(k,k) = 1;
-        if k - 1 >= 1
+        if rem(k,m) ~= 1
             W(k-1,k) = exp(-beta * sqrt(sum((A(i,j,:) - A(i,j-1,:)).^2)) / dmax);
         end
-        if k + 1 <= m
+        if rem(k,m) ~= 0
             W(k+1,k) = exp(-beta * sqrt(sum((A(i,j,:) - A(i,j+1,:)).^2)) / dmax);
         end
         if k - m >= 1
@@ -30,5 +30,5 @@ for i = 2:n+1
         end
     end
 end
-W = 1/2*(W+W');
+% W = 1/2*(W+W');
 end
