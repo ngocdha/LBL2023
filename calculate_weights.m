@@ -11,17 +11,7 @@ MN = m*n;
 W = zeros(MN,MN);
 dmax = max(max(max(A)));
 A = [zeros(1,m+2,z);zeros(n,1,z), A, zeros(n,1,z); zeros(1,m+2,z)];
-% for i=1:MN
-%     for j=i:MN
-%         pm = (Aij(i)-Aij(j)).^2;
-%         if pm > dmax
-%             dmax = pm;
-%     end
-% end
-% for i = 1:MN
-%    idx = connected(i,n,m);
-%    W(idx,i) = exp(-beta * (Aij(i) - Aij(idx)).^2 / dmax);
-% end
+
 for i = 2:n+1
     for j = 2:m+1
         k = m*(i-2) + (j-1);
@@ -40,4 +30,5 @@ for i = 2:n+1
         end
     end
 end
+W = 1/2*(W+W');
 end
