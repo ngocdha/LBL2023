@@ -17,16 +17,16 @@ for i = 2:n+1
         k = m*(i-2) + (j-1);
         W(k,k) = 1;
         if rem(k,m) ~= 1
-            W(k-1,k) = exp(-beta * sqrt(sum((A(i,j,:) - A(i,j-1,:)).^2)) / dmax);
+            W(k-1,k) = exp(-beta * (sum((A(i,j,:) - A(i,j-1,:)).^2)) / dmax);
         end
         if rem(k,m) ~= 0
-            W(k+1,k) = exp(-beta * sqrt(sum((A(i,j,:) - A(i,j+1,:)).^2)) / dmax);
+            W(k+1,k) = exp(-beta * (sum((A(i,j,:) - A(i,j+1,:)).^2)) / dmax);
         end
         if k - m >= 1
-            W(k-m,k) = exp(-beta * sqrt(sum((A(i,j,:) - A(i-1,j,:)).^2)) / dmax);
+            W(k-m,k) = exp(-beta * (sum((A(i,j,:) - A(i-1,j,:)).^2)) / dmax);
         end
         if k + m <= MN
-            W(k+m,k) = exp(-beta * sqrt(sum((A(i,j,:) - A(i+1,j,:)).^2)) / dmax);
+            W(k+m,k) = exp(-beta * (sum((A(i,j,:) - A(i+1,j,:)).^2)) / dmax);
         end
     end
 end
