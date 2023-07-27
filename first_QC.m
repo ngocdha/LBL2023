@@ -1,4 +1,4 @@
-nbQubits = 3;
+nbQubits = 5;
 
 MCX = @qclab.qgates.MCX;
 H = @qclab.qgates.Hadamard;
@@ -25,7 +25,7 @@ function increment(circuit)
 
     n = double(circuit.nbQubits);
     for i = 1:n-2
-        circuit.push_back( MCX(i:n-2, 0, ones(length(i:n-2))) );
+        circuit.push_back( MCX(i:n-2, i-1, ones(length(i:n-2))) );
     end
 end
 
@@ -34,6 +34,6 @@ function decrement(circuit)
 
     n = double(circuit.nbQubits);
     for i = 1:n-2
-        circuit.push_back( MCX(i:n-2, 0, zeros(length(i:n-2)))) ;
+        circuit.push_back( MCX(i:n-2, i-1, zeros(length(i:n-2)))) ;
     end
 end
