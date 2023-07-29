@@ -10,7 +10,7 @@ circuit.push_back( X(nbQubits-1) ) ;
 circuit.push_back( H (nbQubits-1) ) ;
 
 
-for T = 1:50
+for T = 1:100
     increment( circuit ) ;
     decrement( circuit ) ;
     circuit.push_back( H(nbQubits-1) );
@@ -24,8 +24,8 @@ fprintf( fID, 'qreg q[%d];\n',nbQubits);
 circuit.toQASM( fID );
 
 % Draw circuit
-fprintf( fID, '\n\nCircuit diagram:\n\n' );
-circuit.draw( fID, 'S' );
+% fprintf( fID, '\n\nCircuit diagram:\n\n' );
+% circuit.draw( fID, 'S' );
 
 % Simulate the circuit, interpret results and plot probabilities
 psi = eye(2^nbQubits, 1);
