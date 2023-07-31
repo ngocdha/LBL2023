@@ -1,4 +1,4 @@
-nbQubits = 5;
+nbQubits = 9;
 
 MCX = @qclab.qgates.MCX;
 H = @qclab.qgates.Hadamard;
@@ -24,11 +24,13 @@ fprintf( fID, 'qreg q[%d];\n',nbQubits);
 circuit.toQASM( fID );
 
 % Draw circuit
-fprintf( fID, '\n\nCircuit diagram:\n\n' );
-circuit.draw( fID, 'S' );
+% fprintf( fID, '\n\nCircuit diagram:\n\n' );
+% circuit.draw( fID, 'S' );
 
 % Simulate the circuit, interpret results and plot probabilities
-psi = eye(2^nbQubits, 1);
+I = eye(2^nbQubits);
+pos = 2^(nbQubits-2);
+psi = I(:,pos); % eye(2^nbQubits, 1);
 psi = circuit.apply('R', 'N', nbQubits, psi);
 p = abs(psi).^2;
 
@@ -37,12 +39,22 @@ for i = 0:2^(nbQubits)-1
   myXticklabels{i+1} = dec2bin( i, nbQubits );
 end
 
-figure(1); clf
+figure; clf
+% bar(0:31, p)
+% xticks(0:31)
 bar( 1:2^(nbQubits), p );
 xticks( 1:2^(nbQubits) );
 xticklabels( myXticklabels );
-ylabel('Probabilities');
+ylabel('Probabilities');xlabel('Position')
+TTL = strcat('100 steps, initial state: $\vert 1\rangle_C\otimes\vert$', sprintf('%d', pos-1), '$\rangle_P$');
+title(TTL, 'Interpreter','latex')
 
+figure; clf
+q = 1/2 *( p(1:2:2^nbQubits - 1) + p(2:2:2^nbQubits));
+bar(0:2^(nbQubits-1)-1, q)
+% xticks(0:2^(nbQubits-1)-1)
+ylabel('Probabilities');xlabel('Position')
+title(TTL, 'Interpreter','latex')
 
 function increment(circuit)
     MCX = @qclab.qgates.MCX;
