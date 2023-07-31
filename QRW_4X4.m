@@ -1,30 +1,51 @@
 nbQubits = 6; 
 
 MCX = @qclab.qgates.MCX;
-MCH = @MCH;
+MCH = @qclab.qgates.MCH;
 H = @qclab.qgates.Hadamard;
 CNOT = @qclab.qgates.CNOT;
 
 circuit = qclab.QCircuit( nbQubits ) ;
-circuit.push_back( MCH([0,1], 2)) ;
+
+
 circuit.push_back( H(nbQubits - 1) ) ;
 circuit.push_back( H(nbQubits - 2) ) ;
-circuit.push_back( MCX([2, 3], 4, [1,1]) ) ;
+
+circuit.push_back( MCH([2, 3], 4, [1,1]) ) ;
+
 circuit.push_back( MCX([5,4,3], 2, [1,1,1]) ) ;
+
 circuit.push_back( MCX([5,4], 3, [1,1]) ) ;
-circuit.push_back( MCX([2,3], 4, [1,1]) ) ;
-circuit.push_back( MCX([0,1], 5, [1,1]) ) ;
+
+circuit.push_back( MCH([2,3], 4, [1,1]) ) ;
+
+circuit.push_back( MCH([0,1], 5, [1,1]) ) ;
+
 circuit.push_back( MCX([5,4,1], 0, [1,0,1]) ) ;
+
 circuit.push_back( MCX([5, 4], 1, [1,0]) ) ;
-circuit.push_back( MCX([0,1], 5, [1,1]) ) ;
+
+circuit.push_back( MCH([0,1], 5, [1,1]) ) ;
+
+circuit.push_back( MCH([2, 3], 4, [0,0]) ) ;
+
 circuit.push_back( MCX([2, 3], 4, [0,0]) ) ;
+
 circuit.push_back( MCX([5,4,3], 2, [0,0,0,]) ) ;
+
 circuit.push_back( MCX([5,4], 3, [0,0]) ) ;
-circuit.push_back( MCX([2,3], 4, [0,0]) ) ;
+
+circuit.push_back( MCH([2,3], 4, [0,0]) ) ;
+
 circuit.push_back( MCX([0,1], 5, [0,0]) ) ;
+
 circuit.push_back( MCX([5,4,1], 0, [0,1,0]) ) ;
+
 circuit.push_back( MCX([5,4], 1, [0,1]) ) ;
+
 circuit.push_back( MCX([0,1], 5, [0,0]) ) ;
+
+circuit.push_back( MCH([0,1], 5, [0,0]) ) ;
 
 
 % QASM
@@ -48,11 +69,18 @@ for i = 0:2^(nbQubits)-1
   myXticklabels{i+1} = dec2bin( i, nbQubits );
 end
 
-figure(1); clf
+figure; clf
 bar( 1:2^(nbQubits), p );
 xticks( 1:2^(nbQubits) );
 xticklabels( myXticklabels );
 ylabel('Probabilities');
+
+figure; clf
+q = 1/2 *( p(1:2:2^nbQubits - 1) + p(2:2:2^nbQubits));
+bar(0:2^(nbQubits-1)-1, q)
+% xticks(0:2^(nbQubits-1)-1)
+ylabel('Probabilities');xlabel('Position')
+% title(TTL, 'Interpreter','latex')
 
 
 function increment(circuit)
