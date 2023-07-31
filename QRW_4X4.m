@@ -1,7 +1,7 @@
 nbQubits = 6; 
 
 MCX = @qclab.qgates.MCX;
-MCH = @qclab.qgates.MCH;
+MCH = @MCH;
 H = @qclab.qgates.Hadamard;
 CNOT = @qclab.qgates.CNOT;
 
