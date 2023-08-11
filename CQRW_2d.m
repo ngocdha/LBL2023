@@ -1,13 +1,6 @@
-numQx = 5; % number of x-register qubits
+numQx = 4; % number of x-register qubits
 numQy = 4; % number of y-register qubits
 nbQubits = numQx + numQy; % total number of qubits
-
-% % Call necessary gates
-% MCX = @qclab.qgates.MCX;
-% MCRx = @qclab.qgates.MCRotationX;
-% MCRy = @qclab.qgates.MCRotationY;
-% X = @qclab.qgates.PauliX;
-% MCP = @qclab.qgates.MCPhase;
 
 circuit = qclab.QCircuit( nbQubits ) ; % Create the circuit
 
@@ -20,8 +13,8 @@ circuit.toQASM( fID );
 
 ex = 10; ey = 10; % Define the rectangular boundaries
 %
-%%
-% Construct the circuit
+%% Construct the circuit
+
 tic
 for j = 1:2^numQy
     for i = 1:2^numQx
@@ -34,25 +27,51 @@ toc
 % fprintf( fID, '\n\nCircuit diagram:\n\n' );
 % circuit.draw( fID, 'S' );
 
-% Initialize the state vector
+%
+%% Initialize the state vector
+
 psi = zeros(2^(numQx + numQy),1);
 psi(1) = 1;
+% psi( 5*2^numQx + 5 ) = 1;
 
-T = 40; % Number of steps
+T = 0; % Number of steps
 
-for t = 1:T
-    psi = circuit.apply('R', 'N', nbQubits, psi);
+h = figure; h.Visible = 'off';
+
+axis tight manual
+ax = gca;
+ax.NextPlot = 'replaceChildren';
+
+loops = 40*10;
+M(loops) = struct('cdata',[],'colormap',[]);
+v = VideoWriter('QRW_2d', 'MPEG-4') ; 
+open(v)
+
+for i = 1:loops/10
+    for t = 1:T
+        psi = circuit.apply('R', 'N', nbQubits, psi);
+    end
+    
+    p = abs(psi).^2; p = reshape(p,2^numQx, 2^numQy);
+    %
+    %% Create a surface plot
+    
+    % figure; clf
+    surf(0:2^numQy-1, 0:2^numQx-1,p)
+    title(strcat('CQRW after T = ', sprintf('%d ',T+1), ' steps'))
+    xlabel('$x$', 'Interpreter','latex')
+    ylabel('$y$', 'Interpreter','latex')
+    xlim([0, 2^numQx-1])
+    ylim([0, 2^numQy-1])
+    drawnow
+    f = getframe(gcf);
+    M(10*(t-1)+1:10*t) = f;
+    for p = 1:10
+        writeVideo( v, f ) ;
+    end
+    T = T + 1;
 end
-
-p = abs(psi).^2; p = reshape(p,2^numQx, 2^numQy);
-%
-%%
-% Create a surface plot
-figure; clf
-surf(1:2^numQy, 1:2^numQx,p)
-%
-%%
-
+close(v)
 %
 %% Function definitions %%
 
@@ -88,19 +107,19 @@ end
 
 function [th] = theta_h(i,j, ex, ey, numQx)
     if i == ex
-        if j <=ey
+        if j <= ey
             th = 0;
         else
-            th = pi/4;
+            th = pi/40;
         end
     elseif i == 2^numQx
         if j <= ey
             th = 0;
         else
-            th = pi/4;
+            th = pi/40;
         end
     else
-        th = pi/4;
+        th = pi/40;
     end
 end
 
@@ -109,15 +128,15 @@ function [tv] = theta_v(i,j, ex, ey, numQy)
         if i <= ex
             tv = 0;
         else
-            tv = pi/4;
+            tv = pi/40;
         end
     elseif j == 2^numQy
         if i <= ex
             tv = 0;
         else
-            tv = pi/4;
+            tv = pi/40;
         end
     else
-        tv = pi/4;
+        tv = pi/40;
     end
 end

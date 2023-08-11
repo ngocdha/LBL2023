@@ -10,7 +10,7 @@ circuit.push_back( X(nbQubits-1) ) ;
 circuit.push_back( H (nbQubits-1) ) ;
 
 
-for T = 1:100
+for T = 1:1
     increment( circuit ) ;
     decrement( circuit ) ;
     circuit.push_back( H(nbQubits-1) );
@@ -24,12 +24,12 @@ fprintf( fID, 'qreg q[%d];\n',nbQubits);
 circuit.toQASM( fID );
 
 % Draw circuit
-% fprintf( fID, '\n\nCircuit diagram:\n\n' );
-% circuit.draw( fID, 'S' );
+fprintf( fID, '\n\nCircuit diagram:\n\n' );
+circuit.draw( fID, 'S' );
 
 % Simulate the circuit, interpret results and plot probabilities
 I = eye(2^nbQubits);
-pos = 2^(nbQubits-2);
+pos = 2^(nbQubits-1);
 psi = I(:,pos); % eye(2^nbQubits, 1);
 psi = circuit.apply('R', 'N', nbQubits, psi);
 p = abs(psi).^2;
@@ -46,11 +46,11 @@ bar( 1:2^(nbQubits), p );
 xticks( 1:2^(nbQubits) );
 xticklabels( myXticklabels );
 ylabel('Probabilities');xlabel('Position')
-TTL = strcat('100 steps, initial state: $\vert 1\rangle_C\otimes\vert$', sprintf('%d', pos-1), '$\rangle_P$');
+TTL = strcat('100 steps, initial state: $\vert 1\rangle_C\otimes\vert$', sprintf('%d', pos/2-1), '$\rangle_P$');
 title(TTL, 'Interpreter','latex')
 
 figure; clf
-q = 1/2 *( p(1:2:2^nbQubits - 1) + p(2:2:2^nbQubits));
+q = ( p(1:2:2^nbQubits - 1) + p(2:2:2^nbQubits));
 bar(0:2^(nbQubits-1)-1, q)
 % xticks(0:2^(nbQubits-1)-1)
 ylabel('Probabilities');xlabel('Position')

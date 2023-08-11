@@ -10,8 +10,9 @@ X = @qclab.qgates.PauliX;
 MCP = @qclab.qgates.MCPhase;
 
 % Make theta parameters for each location on the ring
-theta = 3*pi/4 * ones(2^nbQubits,1);
-theta(100) =  0; theta(200) = 0;
+theta = pi/4 * ones(2^nbQubits,1);
+theta(1:101) =  pi/6; theta(201:2^nbQubits) = pi/6;
+theta(nbQubits) = 0;
 theta_b = [theta(1); theta(2^nbQubits:-1:2)]; 
 
 circuit_inc = qclab.QCircuit( nbQubits ) ;
@@ -70,7 +71,7 @@ p = zeros(2^nbQubits, T); % Initialize probabilities
 
 % Simulate circuit, alternate between increment and decrement
 for t = 1:T
-    if mod(i,2) == 1
+    if mod(t,2) == 1
         psi = circuit_dec.apply('R', 'N', nbQubits, psi);
     else
         psi = circuit_inc.apply('R', 'N', nbQubits, psi);
@@ -78,10 +79,10 @@ for t = 1:T
     p(:,t) = abs(psi).^2;
 end
 toc
+%
+%%
+TTL = strcat('Initial state: $\vert$', sprintf('%d', pos-1), '$\rangle_P$, Number of steps: ', sprintf('%d, ', T), 'boundary rotation angle: (L,R) = ($\frac{\pi}{5}, \frac{\pi}{5}$)');
 
-TTL = strcat('Initial state: $\vert$', sprintf('%d', pos-1), '$\rangle_P$, Number of steps: ', sprintf('%d, ', T/2), 'boundary rotation angle: 0');
-
-%% 
 figure; clf
 
 k = (0:(2^numQ - 1)); % position vector
@@ -97,7 +98,7 @@ end
 
 % plot prob. dist. at final time
 plot(k,p(:,T))
-
+xlim([0,256])
 ylabel('Probabilities'); xlabel('Position')
 title(TTL, 'Interpreter','latex')
 %

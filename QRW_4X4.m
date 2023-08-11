@@ -3,8 +3,6 @@ nbQubits = 6;
 MCX = @qclab.qgates.MCX;
 MCH = @qclab.qgates.MCH;
 H = @qclab.qgates.Hadamard;
-CNOT = @qclab.qgates.CNOT;
-
 circuit = qclab.QCircuit( nbQubits ) ;
 
 
@@ -34,6 +32,8 @@ circuit.push_back( MCX([2, 3], 4, [0,0]) ) ;
 circuit.push_back( MCX([5,4,3], 2, [0,0,0,]) ) ;
 
 circuit.push_back( MCX([5,4], 3, [0,0]) ) ;
+
+circuit.push_back( MCX([2,3], 4, [0,0]) ) ;
 
 circuit.push_back( MCH([2,3], 4, [0,0]) ) ;
 
@@ -75,11 +75,17 @@ xticks( 1:2^(nbQubits) );
 xticklabels( myXticklabels );
 ylabel('Probabilities');
 
-figure; clf
-q = 1/2 *( p(1:2:2^nbQubits - 1) + p(2:2:2^nbQubits));
-bar(0:2^(nbQubits-1)-1, q)
-% xticks(0:2^(nbQubits-1)-1)
+% figure; clf
+myPositionLabels = cell( 2^(nbQubits-2), 1 );
+for i = 0:2^(nbQubits-2)-1
+  myPositionLabels{i+1} = strcat(sprintf('%d, ', floor(i/(nbQubits-2))), sprintf('%d', mod(i,(nbQubits-2))));
+end
+q = ( p(1:4:2^nbQubits) + p(2:4:2^nbQubits) + p(3:4:2^nbQubits) + p(4:4:2^nbQubits));
+bar(0:2^(nbQubits-2)-1, q)
+xticks(0:2^(nbQubits-2)-1)
+xticklabels(myPositionLabels)
 ylabel('Probabilities');xlabel('Position')
+
 % title(TTL, 'Interpreter','latex')
 
 

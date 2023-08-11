@@ -8,6 +8,12 @@ MCRy = @qclab.qgates.MCRotationY;
 X = @qclab.qgates.PauliX;
 H = @qclab.qgates.Hadamard;
 
+% QASM
+fID = 1;
+fprintf( fID, '\n\nQASM output:\n\n' );
+fprintf( fID, 'OPENQASM 2.0;\ninclude "qelib1.inc";\n\n');
+fprintf( fID, 'qreg q[%d];\n',nbQubits);
+circuit.toQASM( fID );
 theta = [pi/2; pi/2];
 
 circuit = qclab.QCircuit( nbQubits ) ;
@@ -15,34 +21,31 @@ circuit = qclab.QCircuit( nbQubits ) ;
 % for i = 1:numC
 %     circuit.push_back( X(nbQubits-i) ) ; 
 % end
-% circuit.push_back( X(nbQubits-1) ) ;
+circuit.push_back( X(nbQubits-2) ) ;
 
-for T=1:1
-    for c = 1:numC;
-        circuit.push_back( Ry(nbQubits-c, theta(c)) ) ;
+for T=1:100
+    for c = 1:numC
+        circuit.push_back( Ry(numQ + (c-1), theta(c)) ) ;
     end
     for i=0:numQ-1
-        circuit.push_back( MCX([i+1:numQ],i, ones(size([i+1:numQ])) )) ;
+        circuit.push_back( MCX([i+1:numQ],i, zeros(size([i+1:numQ])) )) ;
     end
     for i=0:numQ-1
-        circuit.push_back( MCX([i+1:numQ+1],i, [zeros(size([i+1:numQ+1]))] )) ;
+        circuit.push_back( MCX([i+1:numQ+1],i, [ones(size([i+1:numQ+1]))] )) ;
+    end
+    if T==1
+        fprintf( fID, '\n\nCircuit diagram:\n\n' );
+        circuit.draw( fID, 'S' );
     end
 end
 
-% QASM
-fID = 1;
-fprintf( fID, '\n\nQASM output:\n\n' );
-fprintf( fID, 'OPENQASM 2.0;\ninclude "qelib1.inc";\n\n');
-fprintf( fID, 'qreg q[%d];\n',nbQubits);
-circuit.toQASM( fID );
-
 % Draw circuit
-fprintf( fID, '\n\nCircuit diagram:\n\n' );
-circuit.draw( fID, 'S' );
+% fprintf( fID, '\n\nCircuit diagram:\n\n' );
+% circuit.draw( fID, 'S' );
 
 % Simulate the circuit, interpret results and plot probabilities
 pos = 512;
-psi = zeros(1024,1); psi(pos) = 1;
+psi = zeros(2^nbQubits,1); psi(pos) = 1;
 psi = circuit.apply('R', 'N', nbQubits, psi);
 p = abs(psi).^2;
 
@@ -52,12 +55,12 @@ for i = 0:2^(nbQubits)-1
 end
 
 TTL = strcat('100 steps, angle $\frac{\pi}{4}$, initial state: $\vert 0,1\rangle_C\otimes\vert$', sprintf('%d', pos/4-1), '$\rangle_P$');
-
-figure; clf
-bar( 1:2^(nbQubits), p );
-xticks( 1:2^(nbQubits) );
-xticklabels( myXticklabels );
-ylabel('Probabilities');
+% 
+% figure; clf
+% bar( 1:2^(nbQubits), p );
+% xticks( 1:2^(nbQubits) );
+% xticklabels( myXticklabels );
+% ylabel('Probabilities');
 %
 figure; clf
 % myPositionLabels = cell( 2^(nbQubits-2), 1 );
