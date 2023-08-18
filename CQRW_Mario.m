@@ -1,36 +1,27 @@
-% Define a 4X4 image // small numbers are dark, large numbers are white
-% A = [2, 7, 84, 100;
-%     1, 12, 74, 98;
-%     13, 21, 4, 9;
-%     31, 13, 7, 3];
-s = 4;
-% A = [ones(2*s,s), [100*ones(s,s); ones(s,s)]];
-% c = gray(100);
-A = imread('Images/mario.jpg'); imshow(A)
+% Load image
+% A = imread('Images/mario.jpg'); % imshow(A)
+A = egg; % figure; imshow(A)
 [n,m,d] = size(A);
 
 % Define labels
-L = [1, 2, 3, 4, 5, 6]; % 1 - red, 2 - blue, 3 - brown, 4 - white, 5 - black, 6 - skin
+L = [1, 2, 3]; % 1 - white, 2 - green, 3 - black
 % Define seeds
-S = [8, 1, 1; 12, 9, 1; 4, 9, 1;
-    9, 12, 2; 
-    12, 16, 3; 5, 15, 3; 4, 6, 3;
-    1, 8, 4; 16, 8, 4; 9, 15, 4;
-    11, 3, 5; 12, 6, 5;
-    3, 12, 6; 13, 12, 6; 8, 5, 6; 13, 4, 6];
-c = [A(1,8,:); A(12,9,:); A(16,12,:); reshape([255,255,255],1,1,3); reshape([0,0,0],1,1,3); A(12,3,:)]; c = reshape(c,6,3); c = double(c);
+S = [8, 5, 1; 8, 14, 1; 5, 9, 1; 13, 9, 1;
+    10, 9, 2; 13, 13, 2; 11, 4, 2; 4, 11, 2; 5, 5, 2;
+    9, 1, 3; 2, 9, 3; 15, 10, 3; 9, 16, 3; 4, 14, 3; 13, 5, 3; 4, 4, 3; 14, 13, 3];
+c = [A(8,5,:); A(9,10,:); uint8(zeros(1,1,3)); A(1,1,:)]; c = reshape(c,4,3); c = double(c);
 
 theta = zeros(n,m,2);
-beta = 150;
+beta = 1/1000;
 tau = pi/4;
 for i = 1:n-1
     for j = 1:m
-        theta(i,j,1) = exp(-beta * sum((A(i,j,:) - A(i+1,j,:)).^2) );
+        theta(i,j,1) = exp(-beta * sum((double(A(i,j,:)) - double(A(i+1,j,:))).^2) );
     end
 end
 for i = 1:n
     for j = 1:m-1
-        theta(i,j,2) = exp(-beta * sum((A(i,j,:) - A(i,j+1,:)).^2) );
+        theta(i,j,2) = exp(-beta * sum((double(A(i,j,:)) - double(A(i,j+1,:))).^2) );
     end
 end
 theta = tau * theta;
@@ -68,45 +59,79 @@ end
 
 %
 %%
-T = [100]; % Number of steps
-for w = 1:numel(T)
-    LD = zeros(2^(numQx+numQy),numel(L));
+T = [1:5, 10, 25]; % Number of steps
+LD = zeros(2^(numQx+numQy),numel(L));
+p = zeros(2^(numQx+numQy), 1+T(end), numel(L));
+psi = zeros(2^(numQx + numQy),numel(L));
+for l = 1:numel(L)
+    subset = seeds_subset(S,L(l));
+    subset_length = size(subset,1);
+    for s = 1:subset_length
+        psi(subset(s,2) + n * (subset(s,1)-1),l) = 1;
+    end
+    psi(:,l) = 1/sqrt(subset_length) * psi(:,l);
+end
 
-    psi = zeros(2^(numQx + numQy),numel(L));
+p(:,1,:) = abs(psi(:,:)).^2;
+
+figure; subplot(1,2,1); imshow(A)
+hold on
+plot(S(:,1), S(:,2), 'o', 'Color', 'red')
+hold off
+title('Original Image', Interpreter='latex')
+hold off
+B = zeros(n,m,3);
+
+for i=1:n
+    for j=1:m
+        if ismember( A(i,j,:), c(1:3,:,:) )
+            [a,id] = max(p(m*(j-1)+i,1,:));
+            if a == 0
+                B(i,j,:) = [255, 0, 255]; % fuchsia
+            else
+                B(i,j,:) = c(id,:);
+            end
+        else
+            B(i,j,:) = c(4,:);
+        end
+    end
+end
+B = uint8(B);
+subplot(1,2,2)
+imshow(B)
+title(strcat('Segmented Image: $T = ', sprintf('%d$', 0)), Interpreter="latex")
+hold off
+
+for w = 1:T(end)
 
     for l = 1:numel(L)
-        subset = seeds_subset(S,L(l));
-        subset_length = size(subset,1);
-        for s = 1:subset_length
-            psi(subset(s,2) + m * (subset(s,1)-1),l) = 1;
-        end
-        psi(:,l) = 1/sqrt(subset_length) * psi(:,l);
+        psi(:,l) = circuit.apply('R', 'N', nbQubits, psi(:,l));
+        p(:,1+w,l) = abs(psi(:,l)).^2;
+        LD(:,l) = 1/(1+w) * sum(p(:,:,l),2);
     end
 
-    p = zeros(2^(numQx+numQy), 1+T(w), numel(L));
-    p(:,1,:) = abs(psi(:,:)).^2;
-    for l = 1:numel(L)
-        for t = 1:T(w)
-            psi(:,l) = circuit.apply('R', 'N', nbQubits, psi(:,l));
-            p(:,1+t,l) = abs(psi(:,l)).^2;
-        end
-        LD(:,l) = 1/(1+T(w)) * sum(p(:,:,l),2);
-    end
 
-    
-    if w == 10
+    if ismember(w,T)
         figure; subplot(1,2,1); imshow(A)
         hold on
-        plot(S(:,1), S(:,2), 'o', 'Color', 'green')
+        plot(S(:,1), S(:,2), 'o', 'Color', 'red')
         hold off
         title('Original Image', Interpreter='latex')
         hold off
         B = zeros(n,m,3);
-    
+
         for i=1:n
             for j=1:m
-                [a,id] = max(LD(m*(j-1)+i,:));
-                B(i,j,:) = c(id,:);
+                if ismember( A(i,j,:), c(1:3,:,:) )
+                    [a,id] = max(LD(m*(j-1)+i,:));
+                    if a == 0
+                        B(i,j,:) = [255, 0, 255]; % fuchsia
+                    else
+                        B(i,j,:) = c(id,:);
+                    end
+                else
+                    B(i,j,:) = c(4,:);
+                end
             end
         end
         B = uint8(B);
@@ -151,7 +176,7 @@ end
 % function dec_y(circuit, numQy)
 % MCX = @qclab.qgates.MCX;
 % X = @qclab.qgates.PauliX;
-% 
+%
 % for j = 0:numQy-2
 %     circuit.push_back( MCX(j+1:numQy-1, j, zeros(length(j+1:numQy-1))) ) ;
 % end
@@ -168,4 +193,61 @@ for j = numQy:n-2
     circuit.push_back( MCX(j+1:n-1, j, zeros(length(j+1:n-1))) ) ;
 end
 circuit.push_back( X(n-1) ) ;
+end
+
+%
+%%
+function A = egg
+A = 255*ones(16,14,3); A(1,6:9,:) = zeros(4,1,3); A(16,6:9,:) = zeros(4,1,3);
+A(8:11,1,:) = zeros(4,1,3); A(8:11,14,:) = zeros(4,1,3);
+A(6:7,2,:) = zeros(2,1,3); A(4:5,3,:) = zeros(2,1,3); A(6:7,13,:) = zeros(2,1,3); A(4:5,12,:) = zeros(2,1,3);
+A(12:13,2,:) = zeros(2,1,3); A(12:13,13,:) = zeros(2,1,3);
+A(14,3,:) = zeros(1,1,3); A(14,12,:) = zeros(1,1,3);
+A(15,4:5,:) = zeros(1,2,3); A(15, 10:11,:) = zeros(1,2,3);
+A(3,4,:) = zeros(1,1,3); A(2,5,:) = zeros(1,1,3);
+A(2,10,:) = zeros(1,1,3); A(3,11,:) = zeros(1,1,3);
+A(3,9:10,1) = 115*ones(1,2); A(3,9:10,2) = 188*ones(1,2); A(3,9:10,3) = 56*ones(1,2);
+A(4:5,9:11,1) = 115*ones(2,3); A(4:5,9:11,2) = 188*ones(2,3); A(4:5,9:11,3) = 56*ones(2,3);
+A(6,10:11,1) = 115*ones(1,2); A(6,10:11,2) = 188*ones(1,2); A(6,10:11,3) = 56*ones(1,2);
+A(4:6,4:5,1) = 115*ones(3,2); A(4:6,4:5,2) = 188*ones(3,2); A(4:6,4:5,3) = 56*ones(3,2);
+A(6:7,3,1) = 115*ones(1,2); A(6:7,3,2) = 188*ones(1,2); A(6:7,3,3) = 56*ones(1,2);
+A(7,4,1) = 115; A(7,4,2) = 188; A(7,4,3) = 56;
+A(11:13,3:4,1) = 115*ones(3,2); A(11:13,3:4,2) = 188*ones(3,2); A(11:13,3:4,3) = 56*ones(3,2);
+A(10:11,2,1) = 115*ones(1,2); A(10:11,2,2) = 188*ones(1,2); A(10:11,2,3) = 56*ones(1,2);
+A(10,3,1) = 115; A(10,3,2) = 188; A(10,3,3) = 56;
+A(8:12,7:9,1) = 115*ones(5,3); A(8:12,7:9,2) = 188*ones(5,3); A(8:12,7:9,3) = 56*ones(5,3);
+A(9:11,6,1) = 115*ones(1,3); A(9:11,6,2) = 188*ones(1,3); A(9:11,6,3) = 56*ones(1,3);
+A(9:11,10,1) = 115*ones(1,3); A(9:11,10,2) = 188*ones(1,3); A(9:11,10,3) = 56*ones(1,3);
+A(12:14,11,1) = 115*ones(1,3); A(12:14,11,2) = 188*ones(1,3); A(12:14,11,3) = 56*ones(1,3);
+A(11:13,12,1) = 115*ones(1,3); A(11:13,12,2) = 188*ones(1,3); A(11:13,12,3) = 56*ones(1,3);
+A(11,13,1) = 115; A(11,13,2) = 188; A(11,13,3) = 56;
+A = [255*ones(16,1,3), A, 255*ones(16,1,3)];
+A(:,1,1) = 172*ones(16,1); A(:,1,2) = 165*ones(16,1); A(:,1,3) = 158*ones(16,1);
+A(:,16,1) = 172*ones(16,1); A(:,16,2) = 165*ones(16,1); A(:,16,3) = 158*ones(16,1);
+
+A(1:7,2,1) = 172*ones(7,1); A(1:7,2,2) = 165*ones(7,1); A(1:7,2,3) = 158*ones(7,1);
+A(12:16,2,1) = 172*ones(5,1); A(12:16,2,2) = 165*ones(5,1); A(12:16,2,3) = 158*ones(5,1);
+A(1:7,15,1) = 172*ones(7,1); A(1:7,15,2) = 165*ones(7,1); A(1:7,15,3) = 158*ones(7,1);
+A(12:16,15,1) = 172*ones(5,1); A(12:16,15,2) = 165*ones(5,1); A(12:16,15,3) = 158*ones(5,1);
+
+A(1:5,3,1) = 172*ones(5,1); A(1:5,3,2) = 165*ones(5,1); A(1:5,3,3) = 158*ones(5,1);
+A(14:16,3,1) = 172*ones(3,1); A(14:16,3,2) = 165*ones(3,1); A(14:16,3,3) = 158*ones(3,1);
+A(1:5,14,1) = 172*ones(5,1); A(1:5,14,2) = 165*ones(5,1); A(1:5,14,3) = 158*ones(5,1);
+A(14:16,14,1) = 172*ones(3,1); A(14:16,14,2) = 165*ones(3,1); A(14:16,14,3) = 158*ones(3,1);
+
+A(1:3,4,1) = 172*ones(3,1); A(1:3,4,2) = 165*ones(3,1); A(1:3,4,3) = 158*ones(3,1);
+A(15:16,4,1) = 172*ones(2,1); A(15:16,4,2) = 165*ones(2,1); A(15:16,4,3) = 158*ones(2,1);
+A(1:3,13,1) = 172*ones(3,1); A(1:3,13,2) = 165*ones(3,1); A(1:3,13,3) = 158*ones(3,1);
+A(15:16,13,1) = 172*ones(2,1); A(15:16,13,2) = 165*ones(2,1); A(15:16,13,3) = 158*ones(2,1);
+
+A(16,11:12,1) = 172*ones(2,1); A(16,11:12,2) = 165*ones(2,1); A(16,11:12,3) = 158*ones(2,1);
+A(16,5:6,1) = 172*ones(2,1); A(16,5:6,2) = 165*ones(2,1); A(16,5:6,3) = 158*ones(2,1);
+A(1,11:12,1) = 172*ones(2,1); A(1,11:12,2) = 165*ones(2,1); A(1,11:12,3) = 158*ones(2,1);
+A(1,5:6,1) = 172*ones(2,1); A(1,5:6,2) = 165*ones(2,1); A(1,5:6,3) = 158*ones(2,1);
+
+A(2,5,1) = 172; A(2,5,2) = 165; A(2,5,3) = 158;
+A(2,12,1) = 172; A(2,12,2) = 165; A(2,12,3) = 158;
+
+
+A = uint8(A);
 end
