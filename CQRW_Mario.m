@@ -2,9 +2,10 @@
 % A = imread('Images/mario.jpg'); % imshow(A)
 A = egg; % figure; imshow(A)
 [n,m,d] = size(A);
-
+%
+%%
 % Define labels
-L = [1, 2, 3]; % 1 - white, 2 - green, 3 - black
+L = [1, 2, 3]; % 1 - cream, 2 - blue, 3 - black
 % Define seeds
 S = [8, 5, 1; 8, 14, 1; 5, 9, 1; 13, 9, 1;
     10, 9, 2; 13, 13, 2; 11, 4, 2; 4, 11, 2; 5, 5, 2;
@@ -74,12 +75,22 @@ end
 
 p(:,1,:) = abs(psi(:,:)).^2;
 
-figure; subplot(1,2,1); imshow(A)
+M(1+10) = struct('cdata',[],'colormap',[]);
+h = figure; h.Visible = 'off';
+
+axis tight manual
+ax = gca;
+ax.NextPlot = 'replaceChildren';
+
+v = VideoWriter('egg', 'MPEG-4') ; 
+open(v)
+subplot(1,2,1); imshow(A)
 hold on
 plot(S(:,1), S(:,2), 'o', 'Color', 'red')
 hold off
 title('Original Image', Interpreter='latex')
 hold off
+
 B = zeros(n,m,3);
 
 for i=1:n
@@ -101,8 +112,12 @@ subplot(1,2,2)
 imshow(B)
 title(strcat('Segmented Image: $T = ', sprintf('%d$', 0)), Interpreter="latex")
 hold off
+drawnow
+f = getframe(gcf);
+M(1) = f;
+writeVideo(v,f);
 
-for w = 1:T(end)
+for w = 1:10
 
     for l = 1:numel(L)
         psi(:,l) = circuit.apply('R', 'N', nbQubits, psi(:,l));
@@ -111,36 +126,44 @@ for w = 1:T(end)
     end
 
 
-    if ismember(w,T)
-        figure; subplot(1,2,1); imshow(A)
-        hold on
-        plot(S(:,1), S(:,2), 'o', 'Color', 'red')
-        hold off
-        title('Original Image', Interpreter='latex')
-        hold off
-        B = zeros(n,m,3);
+    % if ismember(w,T)
+    figure; subplot(1,2,1); imshow(A)
+    hold on
+    plot(S(:,1), S(:,2), 'o', 'Color', 'red')
+    hold off
+    title('Original Image', Interpreter='latex')
+    hold off
+    B = zeros(n,m,3);
 
-        for i=1:n
-            for j=1:m
-                if ismember( A(i,j,:), c(1:3,:,:) )
-                    [a,id] = max(LD(m*(j-1)+i,:));
-                    if a == 0
-                        B(i,j,:) = [255, 0, 255]; % fuchsia
-                    else
-                        B(i,j,:) = c(id,:);
-                    end
+    for i=1:n
+        for j=1:m
+            if ismember( A(i,j,:), c(1:3,:,:) )
+                [a,id] = max(LD(m*(j-1)+i,:));
+                if a == 0
+                    B(i,j,:) = [255, 0, 255]; % fuchsia
                 else
-                    B(i,j,:) = c(4,:);
+                    B(i,j,:) = c(id,:);
                 end
+            else
+                B(i,j,:) = c(4,:);
             end
         end
-        B = uint8(B);
-        subplot(1,2,2)
-        imshow(B)
-        title(strcat('Segmented Image: $T = ', sprintf('%d$', w)), Interpreter="latex")
-        hold off
     end
+    B = uint8(B);
+    subplot(1,2,2)
+    imshow(B)
+    title(strcat('Segmented Image: $T = ', sprintf('%d$', w)), Interpreter="latex")
+    hold off
+
+    drawnow
+    f = getframe(gcf);
+    M(1+w) = f;
+    for i = 1:10
+        writeVideo(v,f);
+    end
+    % end
 end
+close(v)
 %
 %% Function definitions %%
 
@@ -206,22 +229,24 @@ A(14,3,:) = zeros(1,1,3); A(14,12,:) = zeros(1,1,3);
 A(15,4:5,:) = zeros(1,2,3); A(15, 10:11,:) = zeros(1,2,3);
 A(3,4,:) = zeros(1,1,3); A(2,5,:) = zeros(1,1,3);
 A(2,10,:) = zeros(1,1,3); A(3,11,:) = zeros(1,1,3);
-A(3,9:10,1) = 115*ones(1,2); A(3,9:10,2) = 188*ones(1,2); A(3,9:10,3) = 56*ones(1,2);
-A(4:5,9:11,1) = 115*ones(2,3); A(4:5,9:11,2) = 188*ones(2,3); A(4:5,9:11,3) = 56*ones(2,3);
-A(6,10:11,1) = 115*ones(1,2); A(6,10:11,2) = 188*ones(1,2); A(6,10:11,3) = 56*ones(1,2);
-A(4:6,4:5,1) = 115*ones(3,2); A(4:6,4:5,2) = 188*ones(3,2); A(4:6,4:5,3) = 56*ones(3,2);
-A(6:7,3,1) = 115*ones(1,2); A(6:7,3,2) = 188*ones(1,2); A(6:7,3,3) = 56*ones(1,2);
-A(7,4,1) = 115; A(7,4,2) = 188; A(7,4,3) = 56;
-A(11:13,3:4,1) = 115*ones(3,2); A(11:13,3:4,2) = 188*ones(3,2); A(11:13,3:4,3) = 56*ones(3,2);
-A(10:11,2,1) = 115*ones(1,2); A(10:11,2,2) = 188*ones(1,2); A(10:11,2,3) = 56*ones(1,2);
-A(10,3,1) = 115; A(10,3,2) = 188; A(10,3,3) = 56;
-A(8:12,7:9,1) = 115*ones(5,3); A(8:12,7:9,2) = 188*ones(5,3); A(8:12,7:9,3) = 56*ones(5,3);
-A(9:11,6,1) = 115*ones(1,3); A(9:11,6,2) = 188*ones(1,3); A(9:11,6,3) = 56*ones(1,3);
-A(9:11,10,1) = 115*ones(1,3); A(9:11,10,2) = 188*ones(1,3); A(9:11,10,3) = 56*ones(1,3);
-A(12:14,11,1) = 115*ones(1,3); A(12:14,11,2) = 188*ones(1,3); A(12:14,11,3) = 56*ones(1,3);
-A(11:13,12,1) = 115*ones(1,3); A(11:13,12,2) = 188*ones(1,3); A(11:13,12,3) = 56*ones(1,3);
-A(11,13,1) = 115; A(11,13,2) = 188; A(11,13,3) = 56;
+
+A(3,9:10,1) = 70*ones(1,2); A(3,9:10,2) = 130*ones(1,2); A(3,9:10,3) = 180*ones(1,2);
+A(4:5,9:11,1) = 70*ones(2,3); A(4:5,9:11,2) = 130*ones(2,3); A(4:5,9:11,3) = 180*ones(2,3);
+A(6,10:11,1) = 70*ones(1,2); A(6,10:11,2) = 130*ones(1,2); A(6,10:11,3) = 180*ones(1,2);
+A(4:6,4:5,1) = 70*ones(3,2); A(4:6,4:5,2) = 130*ones(3,2); A(4:6,4:5,3) = 180*ones(3,2);
+A(6:7,3,1) = 70*ones(1,2); A(6:7,3,2) = 130*ones(1,2); A(6:7,3,3) = 180*ones(1,2);
+A(7,4,1) = 70; A(7,4,2) = 130; A(7,4,3) = 180;
+A(11:13,3:4,1) = 70*ones(3,2); A(11:13,3:4,2) = 130*ones(3,2); A(11:13,3:4,3) = 180*ones(3,2);
+A(10:11,2,1) = 70*ones(1,2); A(10:11,2,2) = 130*ones(1,2); A(10:11,2,3) = 180*ones(1,2);
+A(10,3,1) = 70; A(10,3,2) = 130; A(10,3,3) = 180;
+A(8:12,7:9,1) = 70*ones(5,3); A(8:12,7:9,2) = 130*ones(5,3); A(8:12,7:9,3) = 180*ones(5,3);
+A(9:11,6,1) = 70*ones(1,3); A(9:11,6,2) = 130*ones(1,3); A(9:11,6,3) = 180*ones(1,3);
+A(9:11,10,1) = 70*ones(1,3); A(9:11,10,2) = 130*ones(1,3); A(9:11,10,3) = 180*ones(1,3);
+A(12:14,11,1) = 70*ones(1,3); A(12:14,11,2) = 130*ones(1,3); A(12:14,11,3) = 180*ones(1,3);
+A(11:13,12,1) = 70*ones(1,3); A(11:13,12,2) = 130*ones(1,3); A(11:13,12,3) = 180*ones(1,3);
+A(11,13,1) = 70; A(11,13,2) = 130; A(11,13,3) = 180;
 A = [255*ones(16,1,3), A, 255*ones(16,1,3)];
+
 A(:,1,1) = 172*ones(16,1); A(:,1,2) = 165*ones(16,1); A(:,1,3) = 158*ones(16,1);
 A(:,16,1) = 172*ones(16,1); A(:,16,2) = 165*ones(16,1); A(:,16,3) = 158*ones(16,1);
 
@@ -248,6 +273,13 @@ A(1,5:6,1) = 172*ones(2,1); A(1,5:6,2) = 165*ones(2,1); A(1,5:6,3) = 158*ones(2,
 A(2,5,1) = 172; A(2,5,2) = 165; A(2,5,3) = 158;
 A(2,12,1) = 172; A(2,12,2) = 165; A(2,12,3) = 158;
 
-
+idx = A(:,:,1) == 255;
+for i = 1:16
+    for j = 1:16
+        if idx(i,j) == 1
+            A(i,j,2) = 253; A(i,j,3) = 208;
+        end
+    end
+end
 A = uint8(A);
 end
