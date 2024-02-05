@@ -14,7 +14,6 @@ A = [ones(2^nbQubits/8,1); 100*ones(2^nbQubits/4,1); ones(2^nbQubits/8,1); 100*o
 
 
 c = gray(100);
-
 %
 %% 
 

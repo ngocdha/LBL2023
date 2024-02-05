@@ -25,6 +25,19 @@ L = [1,2];
 seeds = [65,1,1; 200, 1, 1;
     15,1, 2; 120,1, 2];
 
+
+% Make theta parameters for each location on the ring
+theta = zeros(2^nbQubits,1);
+beta = 150;
+for i = 1:2^nbQubits-1
+    theta(i) = exp(-beta * sum((c(A(i)) - c(A(i+1))).^2) );
+end
+
+theta = pi/4 * theta;
+theta_b = [theta(1); theta(2^nbQubits:-1:2)]; 
+%
+
+
 %circuit_2 = qclab.QCircuit(2);
 circuit_n = qclab.QCircuit( nbQubits ) ;
     
