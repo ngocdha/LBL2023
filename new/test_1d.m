@@ -3,10 +3,10 @@ nbQubits = 8; % number of register qubits
 nbQubits = nbQubits + numC; %total number of qubits
 
 % Call necessary gates
-MCX = @qclab.qgates.MCX;
-MCRx = @qclab.qgates.MCRotationX;
-MCRy = @qclab.qgates.MCRotationY;
-X = @qclab.qgates.PauliX;
+CX = @qclab.qgates.CNOT;
+Rx = @qclab.qgates.RotationX;
+Ry = @qclab.qgates.RotationY;
+Rz = @qclab.qgates.RotationZ;
 S = @qclab.qgates.Phase;
 H = @qclab.qgates.Hadamard;
 MCP = @qclab.qgates.MCPhase;
@@ -40,16 +40,44 @@ theta_b = [theta(1); theta(2^nbQubits:-1:2)];
 
 %circuit_2 = qclab.QCircuit(2);
 circuit_n = qclab.QCircuit( nbQubits ) ;
+
+% QASM
+fID = 1;
+fprintf( fID, '\n\nQASM output:\n\n' );
+fprintf( fID, 'OPENQASM 2.0;\ninclude "qelib1.inc";\n\n');
+fprintf( fID, 'qreg q[%d];\n',nbQubits);
+circuit_n.toQASM( fID );
     
 % 2-qubit block:
-function 
+% function 
 
 % circuit
 
-for i=1:nbQubits-1
+for i=0:nbQubits-1
+    if i<nbQubits-1
+        j = i+1;
+    else 
+        j = 0;
+    end
     circuit_n.push_back(H(i));
-    circuit_n.push_back(S(i,pi/2));
+    circuit_n.push_back(S(i,-pi/2));
     circuit_n.push_back(H(i));
+    circuit_n.push_back(H(j));
+    circuit_n.push_back(S(j,-pi/2));
+    circuit_n.push_back(H(j));
+
+    circuit_n.push_back(CX(j,i));
+    circuit_n.push_back(Rx(i,2*theta(i+1)));
+    circuit_n.push_back(Rz(j,2*theta(i+1)));
+    circuit_n.push_back(CX(j,i));
+
+    circuit_n.push_back(H(i));
+    circuit_n.push_back(S(i,-pi/2));
+    circuit_n.push_back(H(i));
+    circuit_n.push_back(H(j));
+    circuit_n.push_back(S(j,-pi/2));
+    circuit_n.push_back(H(j));
+        
 end
 circuit_n.draw( fID, 'S' );
 
