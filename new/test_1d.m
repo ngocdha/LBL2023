@@ -13,7 +13,7 @@ MCP = @qclab.qgates.MCPhase;
 Phase90 = @qclab.qgates.Phase90;
 
 % Make 1d Image
-A = [ones(2^nbQubits/8,1); 100*ones(2^nbQubits/4,1); ones(2^nbQubits/8,1); 100*ones(2^nbQubits/2,1)];
+A = [ones(nbQubits/8,1); 100*ones(nbQubits/4,1); ones(nbQubits/8,1); 100*ones(nbQubits/2,1)];
 
 c = gray(100);
 %
@@ -29,7 +29,7 @@ seeds = [65,1,1; 200, 1, 1;
 % Make theta parameters for each location on the ring
 theta = zeros(2^nbQubits,1);
 beta = 150;
-for i = 1:2^nbQubits-1
+for i = 1:nbQubits-1
     theta(i) = exp(-beta * sum((c(A(i)) - c(A(i+1))).^2) );
 end
 
@@ -47,39 +47,50 @@ fprintf( fID, '\n\nQASM output:\n\n' );
 fprintf( fID, 'OPENQASM 2.0;\ninclude "qelib1.inc";\n\n');
 fprintf( fID, 'qreg q[%d];\n',nbQubits);
 circuit_n.toQASM( fID );
-    
+
 % 2-qubit block:
 % function 
 
 % circuit
 
 for i=0:nbQubits-1
+    circuit_n.push_back(H(i));
+    circuit_n.push_back(S(i,-pi/2));
+    circuit_n.push_back(H(i));
+end
+    
+for i=0:nbQubits-1
     if i<nbQubits-1
         j = i+1;
     else 
         j = 0;
     end
-    circuit_n.push_back(H(i));
-    circuit_n.push_back(S(i,-pi/2));
-    circuit_n.push_back(H(i));
-    circuit_n.push_back(H(j));
-    circuit_n.push_back(S(j,-pi/2));
-    circuit_n.push_back(H(j));
 
     circuit_n.push_back(CX(j,i));
     circuit_n.push_back(Rx(i,2*theta(i+1)));
     circuit_n.push_back(Rz(j,2*theta(i+1)));
     circuit_n.push_back(CX(j,i));
+end
 
+for i=0:nbQubits-1
     circuit_n.push_back(H(i));
-    circuit_n.push_back(S(i,-pi/2));
-    circuit_n.push_back(H(i));
-    circuit_n.push_back(H(j));
-    circuit_n.push_back(S(j,-pi/2));
-    circuit_n.push_back(H(j));
-        
+    circuit_n.push_back(S(i,pi/2));
+    circuit_n.push_back(H(i));        
 end
 circuit_n.draw( fID, 'S' );
+
+% Simulate
+
+psi = zeros(2^nbQubits,1);
+psi(1) = 1;
+T = 2;
+p = zeros(2^nbQubits,T+1);
+p(:,1) = abs(psi).^2;
+for t = 1:T
+    psi = circuit_n.apply('R','N',8,psi);
+    p(:,1+t) = abs(psi).^2;
+end
+    
 
 
 
