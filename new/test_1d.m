@@ -1,5 +1,5 @@
 numC = 0; % number of quantum coins
-nbQubits = 8; % number of register qubits
+nbQubits = 9; % number of register qubits
 nbQubits = nbQubits + numC; %total number of qubits
 
 % Call necessary gates
@@ -13,7 +13,7 @@ MCP = @qclab.qgates.MCPhase;
 Phase90 = @qclab.qgates.Phase90;
 
 % Make 1d Image
-A = [ones(nbQubits/8,1); 100*ones(nbQubits/4,1); ones(nbQubits/8,1); 100*ones(nbQubits/2,1)];
+A = [ones(1,1); 100*ones(6,1); ones(2,1)];
 
 c = gray(100);
 %
@@ -33,7 +33,7 @@ for i = 1:nbQubits-1
     theta(i) = exp(-beta * sum((c(A(i)) - c(A(i+1))).^2) );
 end
 
-theta = pi/4 * theta;
+theta = pi/40 * theta;
 theta_b = [theta(1); theta(2^nbQubits:-1:2)]; 
 %
 
@@ -66,10 +66,10 @@ for i=0:nbQubits-1
         j = 0;
     end
 
-    circuit_n.push_back(CX(j,i));
+    circuit_n.push_back(CX(i,j));
     circuit_n.push_back(Rx(i,2*theta(i+1)));
     circuit_n.push_back(Rz(j,2*theta(i+1)));
-    circuit_n.push_back(CX(j,i));
+    circuit_n.push_back(CX(i,j));
 end
 
 for i=0:nbQubits-1
@@ -82,15 +82,29 @@ circuit_n.draw( fID, 'S' );
 % Simulate
 
 psi = zeros(2^nbQubits,1);
-psi(1) = 1;
-T = 2;
+psi(17) = 1;
+T = 200;
 p = zeros(2^nbQubits,T+1);
 p(:,1) = abs(psi).^2;
 for t = 1:T
-    psi = circuit_n.apply('R','N',8,psi);
+    psi = circuit_n.apply('R','N',nbQubits,psi);
     p(:,1+t) = abs(psi).^2;
 end
-    
+
+indices = zeros(nbQubits);
+for i = 0:nbQubits-1
+    indices(i+1) = 2^(i)+1;
+end
+p_state = p([2,3,5,9,17,33,65,129,257],:);
+
+p_avg=zeros(T+1,nbQubits);
+for i = 1:T+1
+    p_avg(i,:) = mean(p_state(:,1:i),2);
+end
+
+surf(p_state)
+surf(p_avg)
+
 
 
 
