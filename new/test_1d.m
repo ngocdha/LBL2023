@@ -104,14 +104,14 @@ end
 
 figure;
 surf(p_state);
-title("Limiting distribution of state (1d case)");
+title("Distribution of state (1d case)");
 xlabel("Time (iterations)");
 ylabel("Position of up spin");
 zlabel("Probability mass");
 
 figure;
 surf(p_avg);
-title("Average distribution of state (1 case)");
+title("Average distribution of state (1d case)");
 ylabel("Time (iterations)");
 xlabel("Position of up spin");
 zlabel("Probability mass");
