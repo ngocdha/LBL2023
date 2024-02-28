@@ -102,9 +102,18 @@ for i = 1:T+1
     p_avg(i,:) = mean(p_state(:,1:i),2);
 end
 
-surf(p_state)
-surf(p_avg)
+figure;
+surf(p_state);
+title("Limiting distribution of state (1d case)");
+xlabel("Time (iterations)");
+ylabel("Position of up spin");
+zlabel("Probability mass");
 
-
+figure;
+surf(p_avg);
+title("Average distribution of state (1 case)");
+ylabel("Time (iterations)");
+xlabel("Position of up spin");
+zlabel("Probability mass");
 
 
