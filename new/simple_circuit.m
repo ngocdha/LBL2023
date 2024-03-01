@@ -58,25 +58,34 @@ for i=0:nbQubits-1
     circuit_n.push_back(S(i,-pi/2));
     circuit_n.push_back(H(i));
 end
-    
-for i=0:nbQubits-1
-    if i<nbQubits-1
-        j = i+1;
-    else
-        j = 0;
-    end
 
+for i = 0:2:nbQubits-2
+    j = i+1;
     circuit_n.push_back(CX(i,j));
     circuit_n.push_back(Rx(i,2*theta(i+1)));
     circuit_n.push_back(Rz(j,2*theta(i+1)));
     circuit_n.push_back(CX(i,j));
 end
 
+for i = 1:2:nbQubits-2
+    j = i+1;
+    circuit_n.push_back(CX(i,j));
+    circuit_n.push_back(Rx(i,2*theta(i+1)));
+    circuit_n.push_back(Rz(j,2*theta(i+1)));
+    circuit_n.push_back(CX(i,j));
+end
+
+circuit_n.push_back(CX(nbQubits-1,0));
+    circuit_n.push_back(Rx(nbQubits-1,2*theta(i+1)));
+    circuit_n.push_back(Rz(0,2*theta(i+1)));
+    circuit_n.push_back(CX(nbQubits-1,0));
+
 for i=0:nbQubits-1
     circuit_n.push_back(H(i));
     circuit_n.push_back(S(i,pi/2));
-    circuit_n.push_back(H(i));        
+    circuit_n.push_back(H(i));
 end
+
 circuit_n.draw( fID, 'S' );
 
 % Simulate
@@ -115,5 +124,3 @@ title("Average distribution of state (1-D case)");
 ylabel("Time (iterations)");
 xlabel("Position of up spin");
 zlabel("Probability mass");
-
-
