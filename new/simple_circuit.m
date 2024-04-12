@@ -13,8 +13,8 @@ MCP = @qclab.qgates.MCPhase;
 Phase90 = @qclab.qgates.Phase90;
 
 % Make 1d Image
-A = [ones(1,1); 100*ones(6,1); ones(2,1)];
-
+%A = [100*ones(6,1); 90*ones(3,1)];
+A = 20:10:100;
 c = gray(100);
 %
 %%
@@ -25,16 +25,22 @@ L = [1,2];
 seeds = [65,1,1; 200, 1, 1;
     15,1, 2; 120,1, 2];
 
-
+% 
 % Make theta parameters for each location on the ring
-theta = zeros(2^nbQubits,1);
+ theta = zeros(nbQubits,1);
 beta = 150;
-for i = 1:nbQubits-1
-    theta(i) = exp(-beta * sum((c(A(i)) - c(A(i+1))).^2) );
+for i = 1:nbQubits
+    if i == nbQubits
+        theta(i) = exp(-beta * ( sum((c(A(i)) - c(A(1))).^2 + sum((c(A(5)) - c(A(1))).^2) )));
+        %theta(i) = exp(-beta * ( sum((c(A(i)) - c(A(1))).^2) ));
+    else
+        theta(i) = exp(-beta * ( sum((c(A(i)) - c(A(5))).^2+sum((c(A(5)) - c(A(i+1))).^2) )));
+        %theta(i) = exp(-beta * ( sum((c(A(i)) - c(A(i+1))).^2) ));
+    end
 end
 
 theta = pi/40 * theta;
-theta_b = [theta(1); theta(2^nbQubits:-1:2)]; 
+%theta_b = [theta(1); theta(2^nbQubits:-1:2)]; 
 %
 
 
@@ -76,8 +82,8 @@ for i = 1:2:nbQubits-2
 end
 
 circuit_n.push_back(CX(nbQubits-1,0));
-    circuit_n.push_back(Rx(nbQubits-1,2*theta(i+1)));
-    circuit_n.push_back(Rz(0,2*theta(i+1)));
+    circuit_n.push_back(Rx(nbQubits-1,2*theta(nbQubits)));
+    circuit_n.push_back(Rz(0,2*theta(nbQubits)));
     circuit_n.push_back(CX(nbQubits-1,0));
 
 for i=0:nbQubits-1
@@ -92,7 +98,7 @@ circuit_n.draw( fID, 'S' );
 
 psi = zeros(2^nbQubits,1);
 psi(17) = 1;
-T = 200;
+T = 199;
 p = zeros(2^nbQubits,T+1);
 p(:,1) = abs(psi).^2;
 for t = 1:T
@@ -111,15 +117,31 @@ for i = 1:T+1
     p_avg(i,:) = mean(p_state(:,1:i),2);
 end
 
-figure;
-surf(p_state);
-title("Distribution of state (1-D case)");
-xlabel("Time (iterations)");
-ylabel("Position of up spin");
-zlabel("Probability mass");
+p_avg_global = p_avg;
+
+% figure;
+% surf(p_state);
+% shading interp;
+% title("Distribution of state (1-D case)");
+% xlabel("Time (iterations)");
+% ylabel("Position of up spin");
+% zlabel("Probability mass");
 
 figure;
-surf(p_avg);
+subplot(1,2,1);
+surf(p_avg_global);
+shading interp;
+cb = colorbar(); 
+ylabel(cb,'Probability','FontSize',16,'Rotation',270)
+title("Average distribution of state (1-D case)");
+ylabel("Time (iterations)");
+xlabel("Position of up spin");
+zlabel("Probability mass");
+subplot(1,2,2);
+surf(p_avg_local);
+shading interp;
+cb = colorbar(); 
+ylabel(cb,'Probability','FontSize',16,'Rotation',270)
 title("Average distribution of state (1-D case)");
 ylabel("Time (iterations)");
 xlabel("Position of up spin");
