@@ -1,0 +1,9 @@
+theme: minima
+
+plugins:
+  - jekyll-feed
+
+title: Quantum Random Walks and Image Segmentation
+
+baseurl: "/LBL2023"
+url: ""
