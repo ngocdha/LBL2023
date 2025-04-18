@@ -1,21 +1,24 @@
 clc; clear;
 
 % === 1. Input Image ===
-img = [255, 250, 240, 245, 10, 5, 15, 8];
+img1 = [255, 250, 240, 245, 10, 5, 15, 8];
+img2 = ones(1,8);
+img = img1;
 n = length(img);
 
 % === 2. Spin Operators and Identity ===
 sx = [0, 1; 1, 0];
 sy = [0, 1i; -1i, 0];
-sz = [1 0; 0 -1];
+sz = [1, 0; 0, -1];
 I = eye(2);
 
 % === 3. Pixel Similarity → Coupling Strengths J(i) ===
-J = zeros(1, n);
+J = zeros(1, n);%create J-tensor containing the interactions
 for i = 1:n-1
     next = i + 1;%A:removed mod to make it a line segment
     diff = abs(img(i) - img(next));
-    J(i) = exp(-diff / 50);  % similarity-based coupling
+    J(i) = exp(-diff);  % similarity-based coupling
+
 end
 
 % === 4. Construct Ising-like Hamiltonian ===
@@ -42,10 +45,14 @@ for i = 1:n
     end
     H = H - J(i) * (opA + opB + opC);
 end
+%if we set J =1, then the expected value of sz is non-zero
+%if we set J=-1, the ground state is gapless meaning that the eigenspace of
+%of the lowest eigenvalue is degenerate and, as a result, we obtain
+%expected values of sz that are not zero. 
 
 % (b) Label constraints: pixel 2 = +1, pixel 6 = –1
-label_strength = 2.0;
-label_indices = [2, 6];
+label_strength = 0;%set label strength to 0 to remove magnetic field
+label_indices = [floor(n/4), floor(3*n/4)];
 label_targets = [+1, -1];
 
 for k = 1:length(label_indices)
