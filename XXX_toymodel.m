@@ -1,9 +1,13 @@
 clc; clear;
 
+tic
+
 % === 1. Input Image ===
-img1 = [255, 250, 240, 245, 10, 5, 15, 8];
-img2 = ones(1,8);
-img = img1;
+n1=6;% half the legth of image 1
+img1 = [255 *ones(1,n1),ones(1, n1)];% image 1 is half balck and half white
+n2=10;% length of image 2
+img2 = ones(1,n2); %image 2 is all the same color
+img = img1; %choose between image 1 and image 2 to run the algorithm
 n = length(img);
 
 % === 2. Spin Operators and Identity ===
@@ -17,7 +21,8 @@ J = zeros(1, n);%create J-tensor containing the interactions
 for i = 1:n-1
     next = i + 1;%A:removed mod to make it a line segment
     diff = abs(img(i) - img(next));
-    J(i) = exp(-diff);  % similarity-based coupling
+    J(i) = 1 + exp(-diff/(10*n)) -exp(diff/(10*n));  % similarity-based coupling
+    %J(i)=1;
 
 end
 
@@ -43,7 +48,7 @@ for i = 1:n
         opB = kron(opB, B);
         opC = kron(opC, C);
     end
-    H = H - J(i) * (opA + opB + opC);
+    H = H - (opA + opB)-  J(i)*opC;
 end
 %if we set J =1, then the expected value of sz is non-zero
 %if we set J=-1, the ground state is gapless meaning that the eigenspace of
@@ -51,7 +56,7 @@ end
 %expected values of sz that are not zero. 
 
 % (b) Label constraints: pixel 2 = +1, pixel 6 = –1
-label_strength = 0;%set label strength to 0 to remove magnetic field
+label_strength = n;%set label strength to 0 to remove magnetic field
 label_indices = [floor(n/4), floor(3*n/4)];
 label_targets = [+1, -1];
 
@@ -67,10 +72,14 @@ for k = 1:length(label_indices)
     H = H - label_strength * target * op;
 end
 
+H = sparse(H);%tranform to a sparese matrix
+
 % === 5. Solve for Ground State ===
-[evecs, evals] = eig(H);
-[~, idx] = min(diag(evals));
-ground_state = evecs(:, idx);
+[evecs, evals] = eigs(H, 1, 'SA');%use this if the matrix if SPARSE
+ground_state = evecs;%use this if the matrix is SPARSE
+%[evecs, evals] = eigs(H);%use this if the matrix is NOT SPARSE
+%[~, idx] = min(diag(evals));%use this if the matrix is NOT SPARSE
+%ground_state = evecs(:, idx);%use this if the matrix is NOT SPARSE
 
 % === 6. Measure ⟨σz⟩ for Each Pixel ===
 expect_vals = zeros(1, n);
@@ -112,3 +121,5 @@ ylabel('Segment');
 xticks(1:n);
 ylim([-0.5 1.5]);
 grid on;
+
+toc
