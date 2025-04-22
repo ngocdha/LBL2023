@@ -1,0 +1,109 @@
+clc; clear;
+
+tic
+
+% === 1. Input Image ===
+n1=5;% half the legth of image 1
+img1 = [255 *ones(1,n1),ones(1, n1)];% image 1 is half balck and half white
+n2=8;% length of image 2
+img2 = ones(1,n2); %image 2 is all the same color
+img = img2; %choose between image 1 and image 2 to run the algorithm
+n = length(img);
+
+% === 2. Spin Operators and Identity ===
+sx = [0, 1; 1, 0];
+sy = [0, 1i; -1i, 0];
+sz = [1, 0; 0, -1];
+I = eye(2);
+
+% === 3. Pixel Similarity → Coupling Strengths J(i) ===
+J = zeros(1, n);%create J-tensor containing the interactions
+for i = 1:n-1
+    next = i + 1;%A:removed mod to make it a line segment
+    diff = abs(img(i) - img(next));
+    J(i) = 1 + exp(-diff/(1*n)) -exp(diff/(1*n));  % similarity-based coupling; it scales with the size of the image
+    %J(i)=1;
+
+end
+
+% === 4. Construct Ising-like Hamiltonian ===
+H = zeros(2^n);
+
+% (a) Interaction: -J(i) * σz_i * σz_{i+1}
+for i = 1:n
+    opX = 1;
+    opY = 1;
+    opZ = 1;
+    for j = 1:n
+        if j == i || j == i + 1 %A:removed mod to make it a line segment
+            X = sx;
+            Y = sy;
+            Z = sz;
+        else
+            X = I;
+            Y = I;
+            Z = I;
+        end
+        opX = kron(opX, X);
+        opY = kron(opY, Y);
+        opZ = kron(opZ, Z);
+    end
+    H = H - (opY + opZ)-  J(i)*opX;
+end
+%if we set J =1, then the expected value of sz is non-zero
+%if we set J=-1, the ground state is gapless meaning that the eigenspace of
+%of the lowest eigenvalue is degenerate and, as a result, we obtain
+%expected values of sz that are not zero. 
+
+
+% (c) External magentic field
+H_ext = 0;
+for i=1:n
+    op=1;
+    for j=1:n
+        A = (j == i) * sx + (j ~= i) * I;
+        op = kron(op, A);
+    end
+    H_ext = H_ext +op;
+end
+
+%H = sparse(H);%tranform to a sparese matrix
+
+b=1;%inverse temperature
+h_str = 1:10;
+h_str = 1 ./ h_str;
+nh = length(h_str);
+mx_list = zeros(1, nh);
+for ih=1:nh
+    %(a) Hamiltonian with external magentic field
+    H_tot = H + h_str(ih)*H_ext;
+    %[evecs, evals] = eigs(H, 1, 'SA');%use this if the matrix if SPARSE
+    [evecs, evals] = eig(H);%use this if the matrix is NOT SPARSE
+    
+    %(b) Partition function
+    Z=0;
+    temp_vec = 0;%temporary vector
+    for i=1:2^n
+        temp_vec = evecs(:, i);
+        Z = Z + (temp_vec'*temp_vec)*exp(- b*evals(i,i));
+    end
+    %The computation assumes that the evecs are not normalized, but it seems
+    %like they are always normalized based on examples. So, we may optimize the
+    %computation for the partition function if we have a guarantee that the
+    %evecs are normalized
+    
+    %(c) average magnetization
+    mx=0;%average x-spin magnetization
+    for i=1:2^n
+        temp_vec = evecs(:, i);
+        mx = mx + real(temp_vec'*H_ext*temp_vec)*exp(- b*evals(i,i));
+    end
+    mx= mx/(Z*n);%average magentization done
+    mx_list(ih) = mx;
+end
+disp(mx_list)
+
+
+
+
+toc
