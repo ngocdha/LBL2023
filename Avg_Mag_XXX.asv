@@ -69,14 +69,14 @@ end
 %H = sparse(H);%tranform to a sparese matrix
 
 % === 5. Average magnetic field ===
-b=1;%inverse temperature
-h_str = 1:100;
+b=1/1000;%inverse temperature
+h_str = 1:10;
 h_str = 1 ./ h_str;
 nh = length(h_str);
 mx_list = zeros(1, nh);
 for ih=1:nh
     %(a) Hamiltonian with external magentic field
-    H_tot = H - h_str(ih)*H_ext;
+    H_tot = H + h_str(ih)*H_ext;
     %[evecs, evals] = eigs(H, 1, 'SA');%use this if the matrix if SPARSE
     [evecs, evals] = eig(H_tot);%use this if the matrix is NOT SPARSE
     
