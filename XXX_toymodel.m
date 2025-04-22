@@ -48,7 +48,7 @@ for i = 1:n
         opY = kron(opY, Y);
         opZ = kron(opZ, Z);
     end
-    H = H - (opX + opY)-  J(i)*opZ;
+    H = H - (opY + opZ)-  J(i)*opX;
 end
 %if we set J =1, then the expected value of sz is non-zero
 %if we set J=-1, the ground state is gapless meaning that the eigenspace of
@@ -112,7 +112,7 @@ end
 %H=-H;%flip the energies?
 
 % (c) Label constraints: pixel n/4 = +1, 3n/4 = –1
-label_strength = 1*n;%strength of the magnetic field, n, increases with the size of the image; set label strength to 0 to remove magnetic field
+label_strength = 0*n;%strength of the magnetic field, n, increases with the size of the image; set label strength to 0 to remove magnetic field
 label_indices = [floor(n/4), floor(3*n/4)];
 %label_indices = [1, 8];
 label_targets = [+1, +1];
@@ -140,19 +140,45 @@ ground_state = evecs(:, idx);%use this if the matrix is NOT SPARSE
 
 % === 6. Measure ⟨σx⟩ for Each Pixel ===
 expect_vals = zeros(1, n);
+tot_sx = 0;%total x-spin magnetization
 for i = 1:n
     op = 1;
     for j = 1:n
         A = (j == i) * sx + (j ~= i) * I;
         op = kron(op, A);
     end
+    tot_sx = tot_sx + op;
     expect_vals(i) = real(ground_state' * op * ground_state);
 end
 
 % === 7. Assign Segments ===
 segments = expect_vals >= 0;
 
-% === 8. Plotting ===
+% === 8. Average Magentizatin ===
+%(a) Partition function
+b=1;%inverse temperature
+Z=0;
+temp_vec = 0;%temporary vector
+for i=1:2^n
+    temp_vec = evecs(:, i);
+    Z = Z + (temp_vec'*temp_vec)*exp(- b*evals(i,i));
+end
+%The computation assumes that the evecs are not normalized, but it seems
+%like they are always normalized based on examples. So, we may optimize the
+%computation for the partition function if we have a guarantee that the
+%evecs are normalized
+
+%(b) average magnetization
+mx=0;%average x-spin magnetization
+for i=1:2^n
+    temp_vec = evecs(:, i);
+    mx = mx + real(temp_vec'*tot_sx*temp_vec)*exp(- b*evals(i,i));
+end
+mx= mx/(Z*n);%average magentization done
+disp(mx)
+
+
+% === 9. Plotting ===
 figure;
 
 subplot(3,1,1);

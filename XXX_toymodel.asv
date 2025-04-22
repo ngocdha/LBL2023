@@ -3,7 +3,7 @@ clc; clear;
 tic
 
 % === 1. Input Image ===
-n1=4;% half the legth of image 1
+n1=5;% half the legth of image 1
 img1 = [255 *ones(1,n1),ones(1, n1)];% image 1 is half balck and half white
 n2=8;% length of image 2
 img2 = ones(1,n2); %image 2 is all the same color
@@ -21,7 +21,7 @@ J = zeros(1, n);%create J-tensor containing the interactions
 for i = 1:n-1
     next = i + 1;%A:removed mod to make it a line segment
     diff = abs(img(i) - img(next));
-    J(i) = 1 + exp(-diff/(10*n)) -exp(diff/(10*n));  % similarity-based coupling; it scales with the size of the image
+    J(i) = 1 + exp(-diff/(1*n)) -exp(diff/(1*n));  % similarity-based coupling; it scales with the size of the image
     %J(i)=1;
 
 end
@@ -48,7 +48,7 @@ for i = 1:n
         opY = kron(opY, Y);
         opZ = kron(opZ, Z);
     end
-    H = H - (opX + opY)-  J(i)*opZ;
+    H = H - (opY + opZ)-  J(i)*opX;
 end
 %if we set J =1, then the expected value of sz is non-zero
 %if we set J=-1, the ground state is gapless meaning that the eigenspace of
@@ -56,7 +56,7 @@ end
 %expected values of sz that are not zero. 
 
 % (b1) Dipole interaction1: S(i).S(j)/|i-j|^3
-d=1; %strenth of dipole interaction
+d=10; %strenth of dipole interaction
 for i = 1:n
     for j=1:n
         opX = 1;
@@ -88,43 +88,38 @@ end
 %degenerate. There will be an eigenvector that has zero expected value of
 %the x-spin for all sites.
 
-% (b2) Dipole interaction1: [S(i).(i-j)][S(j).(i-j)]/|i-j|^3
-d=1; %strenth of dipole interaction
+% (b2) Dipole interaction2: [S(i).(i-j)][S(j).(i-j)]/|i-j|^3
 for i = 1:n
     for j=1:n
         opX = 1;
-        opY = 1;
-        opZ = 1;
         for k = 1:n
             if k == i || k == j 
                 X = sx;
-                Y = sy;
-                Z = sz;
             else
                 X = I;
-                Y = I;
-                Z = I;
             end
         opX = kron(opX, X);
-        opY = kron(opY, Y);
-        opZ = kron(opZ, Z);
         end
         if i ~= j
-            H = H  +(1/((d^3)*(abs(i-j)^5))*(opX + opY + opZ);
+            H = H  +(3/(d*abs(i-j))^3)*(opX);
         end
     end
 end
-%This term introduces the geomerty dependence. 
+%This term introduces the geomerty dependence. We assume that all the
+%vertexes in the lattice lie in the x-axis, which leads to a simplification
+%and only sx terms
+
+%H=-H;%flip the energies?
 
 % (c) Label constraints: pixel n/4 = +1, 3n/4 = –1
-label_strength = n;%strength of the magnetic field, n, increases with the size of the image; set label strength to 0 to remove magnetic field
+label_strength = 1*n;%strength of the magnetic field, n, increases with the size of the image; set label strength to 0 to remove magnetic field
 label_indices = [floor(n/4), floor(3*n/4)];
-label_targets = [+1, -1];
+%label_indices = [1, 8];
+label_targets = [+1, +1];
 
 for k = 1:length(label_indices)
     i = label_indices(k);
     target = label_targets(k);
-
     op = 1;
     for j = 1:n
         A = (j == i) * sx + (j ~= i) * I;
@@ -145,19 +140,36 @@ ground_state = evecs(:, idx);%use this if the matrix is NOT SPARSE
 
 % === 6. Measure ⟨σx⟩ for Each Pixel ===
 expect_vals = zeros(1, n);
+tot_sx = 1;%total x-spin magnetization
 for i = 1:n
     op = 1;
     for j = 1:n
         A = (j == i) * sx + (j ~= i) * I;
         op = kron(op, A);
     end
+    tot_sx = tot_sx + op;
     expect_vals(i) = real(ground_state' * op * ground_state);
 end
 
 % === 7. Assign Segments ===
 segments = expect_vals >= 0;
 
-% === 8. Plotting ===
+% === 8. Average Magentizatin ===
+b=10;%inverse temperature
+Z=trace(exp(- b* evals));%partition function
+
+mx=0;%average x-spin magnetization
+temp_vec = 0;%temporary vector
+for i=1:2^n
+    temp_vec = evecs(:, i);
+    mx = mx + exp(- b*evals(i,i));
+    %mx = mx + (temp_vec'*tot_sx*temp_vec)*exp(- b*evals(i,i));
+end
+mx= mx/(Z*n);%average magentization done
+disp(mx)
+
+
+% === 9. Plotting ===
 figure;
 
 subplot(3,1,1);
