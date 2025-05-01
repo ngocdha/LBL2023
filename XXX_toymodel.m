@@ -48,7 +48,6 @@ for i = 1:n-1%changed n to n-1
         opY = kron(opY, Y);
         opZ = kron(opZ, Z);
     end
-    disp(J(i))
     H = H - (opY + opZ)-  J(i)*opX;
 end
 %if we set J =1, then the expected value of sz is non-zero
@@ -115,7 +114,6 @@ end
 % (c) Label constraints: pixel n/4 = +1, 3n/4 = –1
 label_strength = 1*n;%strength of the magnetic field, n, increases with the size of the image; set label strength to 0 to remove magnetic field
 label_indices = [floor(n/4), floor(3*n/4)];
-display(label_indices)
 label_targets = [+1, -1];
 
 for k = 1:length(label_indices)
