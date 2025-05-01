@@ -22,8 +22,9 @@ for i = 1:n-1
     next = i + 1;%A:removed mod to make it a line segment
     diff = abs(img(i) - img(next));
     J(i) = 1 + exp(-diff/(1*n)) -exp(diff/(1*n));  % similarity-based coupling; it scales with the size of the image
-    J(i)=1;
+    J(i)=2;
 end
+Javg = sum(J)/(n-1);%Average J
 
 % === 4. Construct Ising-like Hamiltonian ===
 H = zeros(2^n);
@@ -69,9 +70,13 @@ end
 %H = sparse(H);%tranform to a sparese matrix
 
 % === 5. Average magnetic field ===
-b=1;%inverse temperature
-h_str = 1:100;
-h_str = 1 ./ h_str;
+b=10;%inverse temperature
+h_str1 = 1:100;
+h_str1 = 1 ./ h_str1;
+h_str2 = 1:100;
+h_str2 = (-1) ./ h_str2;
+h_str = [h_str1 h_str2];
+h_str = sort(h_str);
 nh = length(h_str);
 mx_list = zeros(1, nh);
 for ih=1:nh
@@ -101,7 +106,7 @@ for ih=1:nh
     mx= mx/(Z*n);%average magentization done
     mx_list(ih) = mx;
 end
-disp(mx_list)
+%disp(mx_list)
 
 % === 6. Plots ===
 figure;
@@ -109,7 +114,9 @@ figure;
 plot(h_str, mx_list, 'o-');            % Line with circles
 xlabel('External magnetic filed');
 ylabel('Average magnetization');
-title('Magnetic Order');
+str = sprintf('Magnetic Order: J=%d, |Λ|=%d', Javg, n);
+%title('Magnetic Order: J=' + 1 );
+title(str);
 grid on;
 
 
